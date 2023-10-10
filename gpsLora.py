@@ -43,6 +43,28 @@ print(args.appskey)
 OTAA_RETRIES = 5
 
 
+def read_config_file(filename):
+    # Create an empty dictionary to store the variables
+    config_vars = {}
+
+    # Open the file and read each line
+    with open(filename, 'r') as f:
+        lines = f.readlines()
+
+    # Process each line
+    for line in lines:
+        # Ignore comments and empty lines
+        if line.startswith('#') or line.strip() == '':
+            continue
+
+        # Split the line into variable and value
+        var, val = line.split('=')
+
+        # Store the variable and value in the dictionary
+        config_vars[var.strip()] = int(val.strip())
+
+    return config_vars
+
 
 class PrintLines(LineReader):
 
@@ -110,6 +132,11 @@ class PrintLines(LineReader):
         time.sleep(delay)
 
 ser = serial.Serial(args.port, baudrate=57600)
+
+
+config_vars = read_config_file('config.txt')
+print(config_vars)  # Output: {'var1': 10, 'var2': 20}
+
 with ReaderThread(ser, PrintLines) as protocol:
     time.sleep(2)
     sf = 7;
