@@ -1,6 +1,8 @@
+# ------------------Config FILE--------------------------------
+
 # GPS BAUDRATE
-baud = 9600
-port = /dev/ttyS0
+GPS_BAUD = 9600
+GPS_PORT = /dev/ttyS0
 
 # File to configure the RN2903 LoRa Module.
 JOIN_MODE = abp
@@ -81,9 +83,9 @@ retx = 7
 
 # mac set adr <state>
 # string representing the state of the adaptive data rate mechanism, either
-on or off.
-This command will return the state of the adaptive data rate mechanism. It will reflect if
-the ADR is on or off on the requested device.
+# on or off.
+# This command will return the state of the adaptive data rate mechanism. It will reflect if
+# the ADR is on or off on the requested device.
 
 adr = off
 
