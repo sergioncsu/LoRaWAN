@@ -61,7 +61,11 @@ def read_config_file(filename):
         var, val = line.split('=')
 
         # Store the variable and value in the dictionary
-        config_vars[var.strip()] = int(val.strip())
+        val = val.strip()
+        if val.isdigit():
+            config_vars[var.strip()] = int(val)
+        else:
+            config_vars[var.strip()] = val
 
     return config_vars
 
