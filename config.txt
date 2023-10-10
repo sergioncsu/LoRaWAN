@@ -1,4 +1,13 @@
+# GPS BAUDRATE
+baud = 9600
+
 # File to configure the RN2903 LoRa Module.
+
+port = /dev/ttyS0
+APP_SESSION_KEY = fd3add07a556a0eb8d9e83de5e165518
+NET_SESSION_KEY = d9a9ba84de42adc98c44dc3fb79665f5
+DEVICE_ADDRESS = 00dda0f5
+PORT = /dev/ttyUSB0
 
 # mac set ar <state>
 
