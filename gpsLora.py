@@ -4,32 +4,28 @@ import serial
 import time
 import pynmea2
 import logging
-
-import time
-
 from enum import IntEnum
-import serial
 from serial.threaded import LineReader, ReaderThread
+from config import read_config_file
 
 # Configure logging
 logging.basicConfig(filename='serial_log.txt', level=logging.INFO)
+lora_config = read_config_file('config.txt')
 
-port = '/dev/ttyS0'
-baud = 9600
-APP_SESSION_KEY = "fd3add07a556a0eb8d9e83de5e165518"
-NET_SESSION_KEY = "d9a9ba84de42adc98c44dc3fb79665f5"
-DEVICE_ADDRESS = "00dda0f5"
-PORT = "/dev/ttyUSB0"
+port = lora_config['port']
+baud = lora_config['baud']
+LORA_BAUD = lora_config['LORA_BAUD']
 
-class arg :
-    joinmode = "abp"
-    appskey = APP_SESSION_KEY
-    nwkskey = NET_SESSION_KEY
-    devaddr = DEVICE_ADDRESS
-    appeui = ""
-    deveui = ""
-    appkey = ""
-    port = PORT
+APP_SESSION_KEY = lora_config['APP_SESSION_KEY']
+NET_SESSION_KEY = lora_config['NET_SESSION_KEY']
+DEVICE_ADDRESS = lora_config['DEVICE_ADDRESS']
+
+APPEUI = lora_config['APP_SESSION_KEY']
+APPKEY = lora_config['NET_SESSION_KEY']
+DEVEUI = lora_config['DEVICE_ADDRESS']
+LORA_PORT = lora_config['LORA_PORT']
+JOIN_MODE = lora_config['JOIN_MODE']
+OTAA_RETRIES =  lora_config['RETRIES']
 
 class ConnectionState(IntEnum):
     SUCCESS = 0
@@ -38,38 +34,6 @@ class ConnectionState(IntEnum):
     FAILED = 500
     TO_MANY_RETRIES = 520
     
-args = arg()
-print(args.appskey)
-OTAA_RETRIES = 5
-
-
-def read_config_file(filename):
-    # Create an empty dictionary to store the variables
-    config_vars = {}
-
-    # Open the file and read each line
-    with open(filename, 'r') as f:
-        lines = f.readlines()
-
-    # Process each line
-    for line in lines:
-        # Ignore comments and empty lines
-        if line.startswith('#') or line.strip() == '':
-            continue
-
-        # Split the line into variable and value
-        var, val = line.split('=')
-
-        # Store the variable and value in the dictionary
-        val = val.strip()
-        if val.isdigit():
-            config_vars[var.strip()] = int(val)
-        else:
-            config_vars[var.strip()] = val
-
-    return config_vars
-
-
 class PrintLines(LineReader):
 
     retries = 0
@@ -88,27 +52,28 @@ class PrintLines(LineReader):
         return self.transport.serial.readline()
 
     def join(self):
-        if args.joinmode == "abp":
+        print(JOIN_MODE)
+        if JOIN_MODE == 'abp':
             self.join_abp()
         else:
             self.join_otaa()
 
     def join_otaa(self):
-        if len(args.appeui):
-            self.send_cmd('mac set appeui %s' % args.appeui)
-        if len(args.appkey):
-            self.send_cmd('mac set appkey %s' % args.appkey)
-        if len(args.deveui):
-            self.send_cmd('mac set deveui %s' % args.deveui)
+        if len(APPEUI):
+            self.send_cmd('mac set appeui %s' % APPEUI)
+        if len(APPKEY):
+            self.send_cmd('mac set appkey %s' % APPKEY)
+        if len(DEVEUI):
+            self.send_cmd('mac set deveui %s' % DEVEUI)
         self.send_cmd('mac join otaa')
 
     def join_abp(self):
-        if len(args.devaddr):
-            self.send_cmd('mac set devaddr %s' % args.devaddr)
-        if len(args.appskey):
-            self.send_cmd('mac set appskey %s' % args.appskey)
-        if len(args.nwkskey):
-            self.send_cmd('mac set nwkskey %s' % args.nwkskey)
+        if len(DEVICE_ADDRESS):
+            self.send_cmd('mac set devaddr %s' % DEVICE_ADDRESS)
+        if len(APP_SESSION_KEY):
+            self.send_cmd('mac set appskey %s' % APP_SESSION_KEY)
+        if len(NET_SESSION_KEY):
+            self.send_cmd('mac set nwkskey %s' % NET_SESSION_KEY)
         self.send_cmd('mac join abp')
 
     def connection_made(self, transport):
@@ -120,7 +85,7 @@ class PrintLines(LineReader):
         print("STATUS: %s" % data)
         if data.strip() == "denied" or data.strip() == "no_free_ch":
             print("Retrying OTAA connection")
-        #    self.retry(self.join)
+            self.retry(self.join)
         elif data.strip() == "accepted":
             print("UPDATING STATE to connected")
             self.state = ConnectionState.CONNECTED
@@ -135,11 +100,8 @@ class PrintLines(LineReader):
         self.transport.write(('%s\r\n' % cmd).encode('UTF-8'))
         time.sleep(delay)
 
-ser = serial.Serial(args.port, baudrate=57600)
-
-
+ser = serial.Serial(LORA_PORT, baudrate = LORA_BAUD)
 config_vars = read_config_file('config.txt')
-print(config_vars)  # Output: {'var1': 10, 'var2': 20}
 
 with ReaderThread(ser, PrintLines) as protocol:
     time.sleep(2)

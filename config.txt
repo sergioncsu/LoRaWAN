@@ -1,6 +1,23 @@
-# File to configure the RN2903 LoRa Module.
+# GPS BAUDRATE
+baud = 9600
+port = /dev/ttyS0
 
+# File to configure the RN2903 LoRa Module.
+JOIN_MODE = abp
+LORA_PORT = /dev/ttyUSB0
+
+# ABP Session
+APP_SESSION_KEY = fd3add07a556a0eb8d9e83de5e165518
+NET_SESSION_KEY = d9a9ba84de42adc98c44dc3fb79665f5
+DEVICE_ADDRESS = 00dda0f5
+LORA_BAUD = 57600
+#OTAA
+APPEUI = 0
+APPKEY = 0
+DEVEUI = 0
+RETRIES = 5
 # mac set ar <state>
+
 
 # This command sets the state of the automatic reply. By enabling the automatic reply,
 # the module will transmit a packet without a payload immediately after a confirmed
@@ -9,4 +26,3 @@
 # DEFAULT off
 
 ar = off
-
