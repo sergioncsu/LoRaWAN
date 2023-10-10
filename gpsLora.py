@@ -7,9 +7,39 @@ import logging
 from enum import IntEnum
 from serial.threaded import LineReader, ReaderThread
 from config import read_config_file
+import logging
+from logging.handlers import TimedRotatingFileHandler
+import os
+from datetime import datetime
 
-# Configure logging
-logging.basicConfig(filename='serial_log.txt', level=logging.INFO)
+# Create a logger
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Create a file handler
+log_directory = 'logs'
+if not os.path.exists(log_directory):
+    os.makedirs(log_directory)
+log_file = os.path.join(log_directory, f'{datetime.now().strftime("%Y-%m-%d")}.log')
+file_handler = TimedRotatingFileHandler(log_file, when='midnight', interval=1)
+file_handler.suffix = '%Y-%m-%d.log'
+file_handler.setLevel(logging.INFO)
+
+# Create a stream handler
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.INFO)
+
+# Create a formatter that adds timestamps
+formatter = logging.Formatter('%(levelname)s - %(asctime)s - %(message)s',
+datefmt='%H:%M:%S')
+file_handler.setFormatter(formatter)
+stream_handler.setFormatter(formatter)
+
+# Add both handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
+
+#logging.basicConfig(filename='serial_log.txt', level=logging.INFO)
 lora_config = read_config_file('config.txt')
 
 port = lora_config['port']
@@ -105,25 +135,34 @@ config_vars = read_config_file('config.txt')
 
 with ReaderThread(ser, PrintLines) as protocol:
     time.sleep(2)
-    sf = 7;
     dr = 0;
+    init_config = 1
     while True:
         if protocol.state != ConnectionState.CONNECTED:
             print("NOT")
             time.sleep(1)
             continue
         try:
+            if (init_config and protocol.state == ConnectionState.CONNECTED):
+                logging.info("Setting init variables...")
+                protocol.send_cmd("mac set ar " + lora_config['ar'])
+                protocol.send_cmd("mac set pwridx %d" % lora_config['pwridx'])
+                protocol.send_cmd("mac set class " + lora_config['class'])
+                protocol.send_cmd("mac set retx %d" % lora_config['retx'])
+                protocol.send_cmd("mac set adr " lora_config['adr'])
+                
+                init_config = 0
             serialPort = serial.Serial(port, baudrate=baud, timeout=30)
             raw_data = serialPort.readline().decode().strip()
-            #print(raw_data)
+            
             #raw_data = "$GPGGA,202530.00,5109.0262,N,11401.8407,W,5,40,0.5,1097.36,M,-17.00,M,18,TSTR*61"
             #raw_data= "$GPGGA,083459.00,3536.415917,N,07840.661100,W,1,05,2.3,99.7,M,-33.5,M,,*61"
 
             if raw_data.find('GGA') > 0:
                 msg = pynmea2.parse(raw_data)
                 #print(msg)
-            #    test = input("waiting for RN2903 command\n")
-             #   protocol.send_cmd(test)
+                test = input("waiting for RN2903 command\n")
+                protocol.send_cmd(test)
 
                 lat_int = int(abs(float(msg.latitude) * 1e8))
                 lon_int = int(abs(float(msg.longitude) * 1e6))
@@ -132,16 +171,12 @@ with ReaderThread(ser, PrintLines) as protocol:
                 #protocol.send_cmd("mac set dr 0")
                 protocol.send_cmd("mac set dr %d" % dr)
                 
-                #protocol.send_cmd("radio set sf sf%d"%sf)
-                #protocol.send_cmd("radio get sf")
-                
+                               
                 protocol.send_cmd("mac tx uncnf 1 " + merged_coordinates)
                 #protocol.send_cmd("radio tx " + merged_coordinates)
-                #protocol.send_cmd("radio get sf")
-                #print(lat_int)
-                #print(lon_int)
-                #sf = sf + 1 if sf < 13 else 7
-                dr = dr + 1 if dr < 3 else 0
+                
+                dr = dr + 1 if dr < lora_config['MAX_DR'] else lora_config['MIN_DR']
+                
         except Exception as e:
             logging.error(f"Serial port exception: {e}")
             print(e)

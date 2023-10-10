@@ -16,9 +16,8 @@ APPEUI = 0
 APPKEY = 0
 DEVEUI = 0
 RETRIES = 5
+
 # mac set ar <state>
-
-
 # This command sets the state of the automatic reply. By enabling the automatic reply,
 # the module will transmit a packet without a payload immediately after a confirmed
 # downlink is received, or when the Frame Pending bit has been set by the server. If set
@@ -26,3 +25,66 @@ RETRIES = 5
 # DEFAULT off
 
 ar = off
+
+#  mac set dr <dataRate>
+# This command sets the MIN AND MAX data rate to be used for the next transmission, 
+# The DR will increase one by 1 from MIN_DR to MAX_DR each transmission, then will start
+# again to MIN_DR.
+# For the description of data rates and the corresponding spreading factors, refer to the
+# LoRaWAN™ Specification V1.0.2.
+# <dataRate>: decimal number representing the data rate, from 0 and 4, but within the
+# limits of the data rate range for the defined channels.
+# For DR = 4, the MIN and MAX must be 4, and change the channels with the command
+# mac set ch drrange from 64 to 71. 
+# DEFAULT 0 to 3
+
+MIN_DR = 0
+MAX_DR = 3
+
+# mac set ch drrange <channelID> <minRange> <maxRange>
+#
+# First Value : <channelID>: decimal number representing the channel number, from 0 to 71
+# Second Value: <minRange>: decimal number representing the minimum data rate, from 0 to 3
+# Third Value : <maxRange>: decimal number representing the maximum data rate, from 0 to 3
+#
+# Note: In the US 902-928 band, channels 64 to 71 are restricted to the DR4 data
+# rate. This command is valid for those channels, however, the only allowed
+# <minRange> and <maxRange> values are 4 4.
+
+ch_drrange = 13 0 2
+
+# mac set pwridx <pwrIndex>
+# Decimal number representing the index value for the output power,
+# from 5 to 10 on the US 902-928 frequency band. 
+# DEFAULT 5
+
+pwridx = 5
+
+# mac set class <class>
+# This command sets the end device LoRaWAN operating class. The default end device
+# class is Class A. When the class is configured as Class C, the end device will enter
+# Class C Continuous Receive mode after the next uplink message is sent. The
+# LoRaWAN network server must also configure this node as a Class C node. The network server configuration is performed out of band from LoRaWAN communications.
+# For more information on the description of operating in Class C mode, refer to the
+# LoRaWAN™ Specification V1.0.2.
+# A letter representing the LoRaWAN device class, either a or c.
+# DEFAULT A
+
+class = a
+
+# mac set retx <reTxNb>
+# <reTxNb>: decimal number representing the number of retransmissions for an uplink
+# confirmed packet, from 0 to 255.
+# DEFAULT 7
+
+retx = 7
+
+# mac set adr <state>
+# string representing the state of the adaptive data rate mechanism, either
+on or off.
+This command will return the state of the adaptive data rate mechanism. It will reflect if
+the ADR is on or off on the requested device.
+
+adr = off
+
+# Reference: https://ww1.microchip.com/downloads/en/DeviceDoc/RN2903%20LoRa%20Technology%20Module%20Command%20Reference%20User%20Guide-40001811B.pdf
