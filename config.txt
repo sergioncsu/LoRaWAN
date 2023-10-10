@@ -1,0 +1,12 @@
+# File to configure the RN2903 LoRa Module.
+
+# mac set ar <state>
+
+# This command sets the state of the automatic reply. By enabling the automatic reply,
+# the module will transmit a packet without a payload immediately after a confirmed
+# downlink is received, or when the Frame Pending bit has been set by the server. If set
+# to OFF, no automatic reply will be transmitted.
+# DEFAULT off
+
+ar = off
+
