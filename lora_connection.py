@@ -51,6 +51,14 @@ class PrintLines(LineReader):
         self.send_cmd('mac set appskey %s' % lora_config['APP_SESSION_KEY'])
         self.send_cmd('mac set nwkskey %s' % lora_config['NET_SESSION_KEY'])
         self.send_cmd('mac join abp')
+        time.sleep(2)
+        logging.info("Setting init variables...")
+        self.send_cmd("mac set ar " + lora_config['ar'])
+        self.send_cmd("mac set pwridx %d" % lora_config['pwridx'])
+        self.send_cmd("mac set class " + lora_config['class'])
+        self.send_cmd("mac set retx %d" % lora_config['retx'])
+        self.send_cmd("mac set adr " + lora_config['adr'])
+        logging.info("Done...")
 
     def connection_made(self, transport):
         print("Connection to LoStik established")
@@ -71,7 +79,7 @@ class PrintLines(LineReader):
             logging.error(f"Serial port exception: {exc}")
         logging.error(f"Lost connection to LoRa serial device: {exc}")
 
-    def send_cmd(self, cmd, delay=.5):
+    def send_cmd(self, cmd, delay=0.5):
         logging.info(cmd)
         self.transport.write(('%s\r\n' % cmd).encode('UTF-8'))
         time.sleep(delay)

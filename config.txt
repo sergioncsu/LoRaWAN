@@ -53,7 +53,7 @@ MAX_DR = 3
 # rate. This command is valid for those channels, however, the only allowed
 # <minRange> and <maxRange> values are 4 4.
 
-ch_drrange = 13 0 2
+ch_drrange = 13 4 2
 
 # mac set pwridx <pwrIndex>
 # Decimal number representing the index value for the output power,
@@ -87,6 +87,6 @@ retx = 7
 # This command will return the state of the adaptive data rate mechanism. It will reflect if
 # the ADR is on or off on the requested device.
 
-adr = off
+adr = on
 
 # Reference: https://ww1.microchip.com/downloads/en/DeviceDoc/RN2903%20LoRa%20Technology%20Module%20Command%20Reference%20User%20Guide-40001811B.pdf
