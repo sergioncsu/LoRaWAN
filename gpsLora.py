@@ -38,7 +38,7 @@ with ReaderThread(ser, PrintLines) as protocol:
                 msg = pynmea2.parse(raw_data)
                 lat_int = int(abs(float(msg.latitude) * 1e8))
                 lon_int = int(abs(float(msg.longitude) * 1e6))
-                merged_coordinates = str(c) + str(lat_int) + str(lon_int)
+                merged_coordinates = str(dr) + str(lat_int) + str(lon_int)
                 c=c+1
               # Uncomment if you want to test LoRa commands.  
                # test = input("waiting for RN2903 command\n")
