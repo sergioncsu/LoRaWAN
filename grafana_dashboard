@@ -1,0 +1,461 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 5,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "G7p9-suVz"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "decimals": 8,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#003aff",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              },
+              {
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "semi-dark-red",
+                "value": 3
+              },
+              {
+                "color": "#800816",
+                "value": 4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 21,
+        "w": 23,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "basemap": {
+          "config": {},
+          "name": "Layer 0",
+          "type": "default"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showDebug": true,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "field": "dr",
+                  "fixed": "dark-green"
+                },
+                "opacity": 0.8,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "field": "rssi",
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "text": {
+                  "field": "gateway_id",
+                  "fixed": "",
+                  "mode": "field"
+                },
+                "textConfig": {
+                  "fontSize": 18,
+                  "offsetX": 15,
+                  "offsetY": 0,
+                  "textAlign": "left",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "filterData": {
+              "id": "byRefId",
+              "options": "A"
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "Data Rate",
+            "tooltip": true,
+            "type": "markers"
+          }
+        ],
+        "tooltip": {
+          "mode": "details"
+        },
+        "view": {
+          "id": "coords",
+          "lat": 35.7496,
+          "lon": -78.65,
+          "zoom": 12
+        }
+      },
+      "pluginVersion": "9.1.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "G7p9-suVz"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT TIME,\n       CASE\n           WHEN LENGTH(SUBSTRING(ENCODE(DATA::BYTEA, 'hex'), 2)) > 0 THEN\n               (LEFT(SUBSTR(ENCODE(DATA::BYTEA, 'hex'), 3), 11)::NUMERIC / 1000000000.0)\n           ELSE\n               0.0 -- Default value when the data is empty or invalid\n       END AS latitude,\n       CASE\n           WHEN LENGTH(RIGHT(SUBSTR(ENCODE(DATA::BYTEA, 'hex'), 13), 10)) > 0 THEN\n               (RIGHT(SUBSTR(ENCODE(DATA::BYTEA, 'hex'), 13), 10)::NUMERIC / -1000000.0)\n           ELSE\n               0.0 -- Default value when the data is empty or invalid\n       END AS longitude,\n       CASE\n           WHEN LENGTH(SUBSTRING(ENCODE(DATA::BYTEA, 'hex'), 1, 2)) > 0 THEN\n               SUBSTRING(ENCODE(DATA::BYTEA, 'hex'), 1, 2)::INT\n           ELSE\n               0 -- Default value when the data is empty or invalid\n       END AS DR,\n       (tx_info->'frequency')::INT AS frequency,\n       (tx_info->'modulation'->'lora'->>'spreadingFactor')::INT AS spreading_factor,\n       (tx_info->'modulation'->'lora'->>'bandwidth')::INT AS bandwidth,\n       (tx_info->'modulation'->'lora'->>'codeRate') AS codeRate,\n       (rx_info->0->>'snr')::NUMERIC(10, 6) AS snr,\n       (rx_info->0->>'rssi')::INT AS rssi,\n       (rx_info->0->>'channel')::INT AS channel,\n       CASE\n           WHEN rx_info->0->>'gatewayId' = 'ac1f09fffe0ba786' THEN 'C2'\n           WHEN rx_info->0->>'gatewayId' = 'ac1f09fffe0ba74f' THEN 'L1'\n           WHEN rx_info->0->>'gatewayId' = 'ac1f09fffe0ba78a' THEN 'L3'\n           WHEN rx_info->0->>'gatewayId' = 'ac1f09fffe0ba749' THEN 'L5'\n           ELSE rx_info->0->>'gatewayId'\n       END AS gateway_id\nFROM event_up\nWHERE device_name='lostikRbpi' AND TIME >= '2023-10-26 20:06:00'\n  AND rx_info->0->>'gatewayId' in ($gateway)\n  AND tx_info->'modulation'->'lora'->>'spreadingFactor' in ($spreading_factor)\nORDER BY TIME DESC;\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "latitude"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "event_location",
+          "timeColumn": "\"time\"",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "LoraWAN Coverage Map",
+      "type": "geomap"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "G7p9-suVz"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false,
+            "minWidth": 100
+          },
+          "decimals": 8,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "coderate"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 105
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "frequency"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 93
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "snr"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 113
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rssi"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 103
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "channel"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 98
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 157
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "spreading_factor"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 136
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "longitude"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 109
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 17,
+        "w": 23,
+        "x": 0,
+        "y": 21
+      },
+      "id": 2,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "time"
+          }
+        ]
+      },
+      "pluginVersion": "9.1.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "G7p9-suVz"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT TIME,\r\n       CASE\r\n           WHEN LENGTH(SUBSTRING(ENCODE(DATA::BYTEA, 'hex'), 2)) > 0 THEN\r\n               (LEFT(SUBSTR(ENCODE(DATA::BYTEA, 'hex'), 3), 11)::NUMERIC / 1000000000.0)\r\n           ELSE\r\n               0.0 -- Default value when the data is empty or invalid\r\n       END AS latitude,\r\n       CASE\r\n           WHEN LENGTH(RIGHT(SUBSTR(ENCODE(DATA::BYTEA, 'hex'), 13), 10)) > 0 THEN\r\n               (RIGHT(SUBSTR(ENCODE(DATA::BYTEA, 'hex'), 13), 10)::NUMERIC / -1000000.0)\r\n           ELSE\r\n               0.0 -- Default value when the data is empty or invalid\r\n       END AS longitude,\r\n       CASE\r\n           WHEN LENGTH(SUBSTRING(ENCODE(DATA::BYTEA, 'hex'), 1, 2)) > 0 THEN\r\n               SUBSTRING(ENCODE(DATA::BYTEA, 'hex'), 1, 2)::INT\r\n           ELSE\r\n               0 -- Default value when the data is empty or invalid\r\n       END AS DR,\r\n       (tx_info->'frequency')::INT AS frequency,\r\n       (tx_info->'modulation'->'lora'->>'spreadingFactor')::INT AS spreading_factor,\r\n       (tx_info->'modulation'->'lora'->>'bandwidth')::INT AS bandwidth,\r\n       (tx_info->'modulation'->'lora'->>'codeRate') AS codeRate,\r\n       (rx_info->0->>'snr')::NUMERIC(10, 6) AS snr,\r\n       (rx_info->0->>'rssi')::INT AS rssi,\r\n       (rx_info->0->>'channel')::INT AS channel,\r\n       CASE\r\n           WHEN rx_info->0->>'gatewayId' = 'ac1f09fffe0ba786' THEN 'NCC2'\r\n           WHEN rx_info->0->>'gatewayId' = 'ac1f09fffe0ba74f' THEN 'LW1'\r\n           WHEN rx_info->0->>'gatewayId' = 'ac1f09fffe0ba78a' THEN 'LW3'\r\n           WHEN rx_info->0->>'gatewayId' = 'ac1f09fffe0ba749' THEN 'LW5'\r\n           ELSE rx_info->0->>'gatewayId'\r\n       END AS gateway_id\r\nFROM event_up\r\nWHERE device_name='lostikRbpi'\r\nORDER BY TIME DESC;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "latitude"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "event_location",
+          "timeColumn": "\"time\"",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Panel Title",
+      "type": "table"
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "G7p9-suVz"
+        },
+        "definition": "SELECT rx_info->0->>'gatewayId' as GW from event_up  WHERE device_name='lostikRbpi' AND TIME >= '2023-10-26 20:06:00';",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Select a Gateway",
+        "multi": false,
+        "name": "gateway",
+        "options": [],
+        "query": "SELECT rx_info->0->>'gatewayId' as GW from event_up  WHERE device_name='lostikRbpi' AND TIME >= '2023-10-26 20:06:00';",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "G7p9-suVz"
+        },
+        "definition": "SELECT \ntx_info->'modulation'->'lora'->>'spreadingFactor'\nFROM event_up  \nWHERE device_name='lostikRbpi' AND TIME >= '2023-10-26 20:06:00';",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Spreading Factor",
+        "multi": false,
+        "name": "spreading_factor",
+        "options": [],
+        "query": "SELECT \ntx_info->'modulation'->'lora'->>'spreadingFactor'\nFROM event_up  \nWHERE device_name='lostikRbpi' AND TIME >= '2023-10-26 20:06:00';",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 3,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-2d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "America/New_York",
+  "title": "LoRaWAN Location and Data rate values",
+  "uid": "31mvV2GSz",
+  "version": 38,
+  "weekStart": ""
+}
